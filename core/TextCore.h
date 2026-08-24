@@ -24,14 +24,17 @@ public:
 	void LaunchGame();//启动游戏
 	int LoadGameLevel(std::string path);//载入关卡数据
 
+	/* 游戏逻辑 */
+
+
 	/* 公开内存操作 */
-	void VMemoryDump();
+	void VMemoryDump() const;
 	void IE_malloc_init(int data_size);
 	void* IE_malloc(size_t size);
 	void IE_free(void* p);
 private:
 	char* data = nullptr;
-	std::vector<std::string> map_src;
+	std::vector<std::string> level_src;
 	uintptr_t IE_memory_start = 0, IE_memory_end = 0, last_loc = 0;
 
 	/* 内部内存分配函数 */

@@ -1,0 +1,2 @@
+#include "TextCore.h"
+

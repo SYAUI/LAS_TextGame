@@ -41,3 +41,6 @@
 # Ignore Build files
 /x64/
 /TextGame/
+
+# Ignore thirdparty
+/imgui/

@@ -104,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,14 +128,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="core\CompilerCore.cpp" />
     <ClCompile Include="core\MemCore.cpp" />
     <ClCompile Include="core\TextCore.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\TextCore.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Documents\设计手册.md" />
+    <ClInclude Include="Packer.cpp" />
+    <ClInclude Include="Packer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Levels\map_main.tgl" />

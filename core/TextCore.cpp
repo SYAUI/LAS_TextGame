@@ -19,12 +19,15 @@ TextGameCore::~TextGameCore()
 }
 
 //内存转储
-void TextGameCore::VMemoryDump()
+void TextGameCore::VMemoryDump() const
 {
     FILE* fp;
-    fopen_s(&fp, "IE.dmp", "wb");
+    fopen_s(&fp, "IE.bin", "wb");
+    if (!fp)
+        return;
     fwrite(data, sizeof(char), strlen(data), fp);
     fclose(fp);
+    return;
 }
 
 
@@ -49,10 +52,10 @@ int TextGameCore::LoadGameLevel(std::string path = "map_main.tgl")
         return -1;//文件不存在或无法打开
     
     //逐行读取文本
-    map_src.clear();
+    level_src.clear();
     std::string str_line;
     while (std::getline(ifs, str_line)) {
-        map_src.push_back(str_line);
+        level_src.push_back(str_line);
     }
     
     
@@ -67,11 +70,3 @@ void TextGameCore::LaunchGame()
 
 
 
-int main()
-{
-    TextGameCore TGC(1024);
-    //IE_malloc_init(1024);
-    TGC.VMemoryDump();
-
-    return 0;
-}
