@@ -67,6 +67,23 @@ void TextGameCore::LaunchGame()
 {
 }
 
+bool _speak(std::string text)
+{
+    printf(text.c_str());
+    return true;
+}
 
+bool _textprint(std::string text[], int size)
+{
+    for (size_t i = 0; i < size; i++)
+    {
+        printf(text[i].c_str());
+    }
+    return true;
+}
 
-
+bool _load(std::string path)
+{
+    printf(path.c_str());
+    return true;
+}

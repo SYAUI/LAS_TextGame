@@ -44,3 +44,10 @@ private:
 	void MakeBlockTail(mem_block* block_head);
 
 };
+
+
+// 操作
+
+bool _speak(std::string text);
+bool _textprint(std::string text[], int size);
+bool _load(std::string path);

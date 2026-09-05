@@ -19,18 +19,15 @@
     <Filter Include="ImGui">
       <UniqueIdentifier>{06e2493c-7a5e-44bd-b354-5a6205118a88}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\Core">
+      <UniqueIdentifier>{27ab8917-3c81-4ae7-a2a0-4c9efec5af3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Core\py">
+      <UniqueIdentifier>{fa36ca7c-8f24-4f6c-b056-6daed57b2c3b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="core\TextCore.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="core\MemCore.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="core\CompilerCore.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Libraries\imgui\imgui.cpp">
@@ -56,6 +53,18 @@
     </ClCompile>
     <ClCompile Include="Form_main.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="core\ScriptParse.cpp">
+      <Filter>源文件\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\TextCore.cpp">
+      <Filter>源文件\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\MemCore.cpp">
+      <Filter>源文件\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\CompilerCore.cpp">
+      <Filter>源文件\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,6 +93,15 @@
   <ItemGroup>
     <None Include="Levels\map_main.tgl">
       <Filter>Levels</Filter>
+    </None>
+    <None Include="core\py\LARK_TRANSFORM_SCRIPT.py">
+      <Filter>源文件\Core\py</Filter>
+    </None>
+    <None Include="core\py\WRAPPER.py">
+      <Filter>源文件\Core\py</Filter>
+    </None>
+    <None Include="Levels\test.tgl">
+      <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
 </Project>
