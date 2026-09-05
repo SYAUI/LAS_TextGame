@@ -1,0 +1,8 @@
+x = 10
+speak("Hello {x}")
+y = 5
+speak("Result: {x} + {y} = {x+y}")   # {x+y} 会触发 KeyError，保持原样
+textprint {
+    one 第一行 {x}
+    two 第二行 {x}
+}
