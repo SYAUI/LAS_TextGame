@@ -173,10 +173,10 @@ int test(string path)
 
 }
 
-int main()
+int main_test()
 {
     test("Levels/map_main.tgl");
-
+    return 0;
 }
 
 

@@ -1,16 +1,12 @@
 #include "core/TextCore.h"
-#include "imgui/imgui.h"
+#include "ImGuiEngine.h"
 
-
-
-
-
-
-int main_()
+int main()
 {
-    TextGameCore TGC(1024);
- 
+    //TextGameCore TGC(1024);
+    RunImGuiWindow();
     //TGC.VMemoryDump();
 
     return 0;
 }
+
