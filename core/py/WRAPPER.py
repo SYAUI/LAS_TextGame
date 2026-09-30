@@ -25,16 +25,24 @@ def load(path):
         new_path = path
     return _core_load(new_path)
 
-def textprint(lines):
+def textprint(*args):
     frame = sys._getframe(1)
     locals_dict = frame.f_locals
     globals_dict = frame.f_globals
     scope = {**globals_dict, **locals_dict}
+
+    # 如果只有一个参数且是列表，则视作块语法转换来的
+    if len(args) == 1 and isinstance(args[0], list):
+        lines = args[0]
+    else:
+        lines = list(args)
+
     new_lines = []
     for line in lines:
         try:
             new_line = line.format(**scope)
-        except KeyError:
+        except (KeyError, AttributeError):
             new_line = line
         new_lines.append(new_line)
+
     return _core_textprint(new_lines)

@@ -89,6 +89,9 @@
     <ClInclude Include="Libraries\imgui\imgui_internal.h">
       <Filter>ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="core\img_format.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Levels\map_main.tgl">

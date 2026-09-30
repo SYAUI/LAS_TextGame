@@ -4,9 +4,9 @@
 int main()
 {
     //TextGameCore TGC(1024);
-    RunImGuiWindow();
+    //RunImGuiWindow();
     //TGC.VMemoryDump();
-    //if (!RunScriptFile("Levels\\test.tgl")) std::cerr << "½Å±¾ÔËÐÐÊ§°Ü£¡" << std::endl;
+    RunScriptFile("Levels\\test.tgl");
 
     return 0;
 }

@@ -46,8 +46,12 @@ private:
 };
 
 
-// 操作
+// Cpp原型操作
 
 bool _speak(std::string text);
 bool _textprint(std::string text[], int size);
 bool _load(std::string path);
+
+
+// Python 脚本相关
+bool RunScriptFile(const std::string& filepath);
