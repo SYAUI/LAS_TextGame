@@ -152,7 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\TextCore.h" />
-    <ClInclude Include="core\img_format.hpp" />
+    <ClInclude Include="core\Img_format.hpp" />
     <ClInclude Include="ImGuiEngine.h" />
     <ClInclude Include="Libraries\imgui\imconfig.h" />
     <ClInclude Include="Libraries\imgui\imgui.h" />

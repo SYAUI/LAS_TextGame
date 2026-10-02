@@ -19,21 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Libraries\imgui\imconfig.h" />
-    <ClInclude Include="..\..\Libraries\imgui\imgui.h" />
-    <ClInclude Include="..\..\Libraries\imgui\imgui_internal.h" />
     <ClInclude Include="..\..\Libraries\stb\stb_image.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="MainFrame.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ImageView.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Libraries\imgui\backends\imgui_impl_dx11.cpp" />
-    <ClCompile Include="..\..\Libraries\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\..\Libraries\imgui\imgui.cpp" />
-    <ClCompile Include="..\..\Libraries\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\..\Libraries\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\..\Libraries\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\..\Libraries\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="stb_image_impl.cpp" />
+    <ClCompile Include="main_wtl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="app.ico" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -91,6 +90,9 @@
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\</IntDir>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\</IntDir>
+  </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnabled>true</VcpkgEnabled>
     <VcpkgEnableManifest>false</VcpkgEnableManifest>
@@ -136,13 +138,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\imgui;$(SolutionDir)Libraries\imgui\backends;$(SolutionDir)Libraries\stb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -153,12 +156,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

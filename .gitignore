@@ -45,3 +45,6 @@
 
 # Ignore thirdparty
 /Libraries/
+
+# Ignore configuration file
+imgui.ini

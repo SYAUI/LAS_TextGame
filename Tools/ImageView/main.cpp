@@ -34,7 +34,9 @@ struct ImageData
     int width = 0;
     int height = 0;
     int channels = 0;
-    unsigned char* pixels = nullptr;
+
+    // 路径，需要时重新解码
+    std::wstring sourcePath;
 
     ID3D11Texture2D* texRGBA = nullptr;
     ID3D11ShaderResourceView* srvRGBA = nullptr;
@@ -62,7 +64,7 @@ struct ImageData
         ReleaseChannelSRVs();
         if (srvRGBA) { srvRGBA->Release(); srvRGBA = nullptr; }
         if (texRGBA) { texRGBA->Release(); texRGBA = nullptr; }
-        if (pixels) { stbi_image_free(pixels); pixels = nullptr; }
+        sourcePath.clear();
         width = height = channels = 0;
     }
 };
@@ -164,6 +166,30 @@ static void DrawImageWithSampling(ImTextureID tex, ImVec2 size)
 }
 
 // ==================== DX11 纹理创建 ====================
+static bool ReadFileToBuffer(const std::wstring& path,
+    std::vector<unsigned char>& outBuf)
+{
+    HANDLE hFile = ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+        nullptr, OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (hFile == INVALID_HANDLE_VALUE) return false;
+
+    LARGE_INTEGER size = {};
+    if (!::GetFileSizeEx(hFile, &size) || size.QuadPart <= 0 ||
+        size.QuadPart > 512ll * 1024 * 1024)
+    {
+        ::CloseHandle(hFile);
+        return false;
+    }
+
+    outBuf.resize((size_t)size.QuadPart);
+    DWORD bytesRead = 0;
+    BOOL ok = ::ReadFile(hFile, outBuf.data(),
+        (DWORD)outBuf.size(), &bytesRead, nullptr);
+    ::CloseHandle(hFile);
+    return ok && bytesRead == (DWORD)outBuf.size();
+}
+
 bool CreateTextureFromPixels(
     ID3D11Device* device,
     const unsigned char* pixels, int width, int height, int stride,
@@ -202,13 +228,14 @@ bool CreateTextureFromPixels(
     return true;
 }
 
-bool CreateRGBATexture(ImageData& img)
+bool CreateRGBATexture(ImageData& img,
+    const unsigned char* rgbaPixels)
 {
     if (img.texRGBA) { img.texRGBA->Release(); img.texRGBA = nullptr; }
     if (img.srvRGBA) { img.srvRGBA->Release(); img.srvRGBA = nullptr; }
 
     return CreateTextureFromPixels(
-        g_pd3dDevice, img.pixels, img.width, img.height, img.width * 4,
+        g_pd3dDevice, rgbaPixels, img.width, img.height, img.width * 4,
         DXGI_FORMAT_R8G8B8A8_UNORM, &img.texRGBA, &img.srvRGBA);
 }
 
@@ -249,90 +276,82 @@ bool CreateChannelTexture(
 // ==================== 按需更新通道纹理 ====================
 void UpdateChannelTextures(ImageData& img, const ChannelView& view)
 {
-    if (img.pixels == nullptr) return;
-
     // 离开分离模式不释放 SRV，保留到换图
     if (!view.separateMode) return;
 
-    // 需要显示 + 还没有 SRV + 没失败过时尝试创建
-    auto ensure = [&](bool show, int idx, ID3D11ShaderResourceView** srv)
-    {
-        if (!show || *srv || img.channelFailed[idx]) return;
+    if (img.sourcePath.empty()) return;
 
-        if (!CreateChannelTexture(g_pd3dDevice, img.pixels,
-            img.width, img.height, idx, srv))
+    // 判断是否真的需要创建新通道
+    auto need = [&](bool show, ID3D11ShaderResourceView* srv, bool failed)
         {
-            img.channelFailed[idx] = true;   // 标记失败，本次图像生命周期内不再重试
-            g_statusMessage = u8"通道纹理创建失败";
-        }
-    };
+            return show && !srv && !failed;
+        };
+    if (!need(view.showR, img.srvR, img.channelFailed[0]) &&
+        !need(view.showG, img.srvG, img.channelFailed[1]) &&
+        !need(view.showB, img.srvB, img.channelFailed[2]) &&
+        !need(view.showA, img.srvA, img.channelFailed[3]))
+        return;
+
+    // 按需重新解码
+    std::vector<unsigned char> buffer;
+    if (!ReadFileToBuffer(img.sourcePath, buffer))
+    {
+        g_statusMessage = u8"读取文件失败（通道分离）";
+        return;
+    }
+
+    int w = 0, h = 0, ch = 0;
+    unsigned char* pixels = stbi_load_from_memory(
+        buffer.data(), (int)buffer.size(), &w, &h, &ch, 4);
+    if (!pixels)
+    {
+        g_statusMessage = u8"解码失败（通道分离）";
+        return;
+    }
+
+    auto ensure = [&](bool show, int idx, ID3D11ShaderResourceView** srv)
+        {
+            if (!show || *srv || img.channelFailed[idx]) return;
+            if (!CreateChannelTexture(g_pd3dDevice, pixels,
+                img.width, img.height, idx, srv))
+            {
+                img.channelFailed[idx] = true;
+                g_statusMessage = u8"通道纹理创建失败";
+            }
+        };
 
     ensure(view.showR, 0, &img.srvR);
     ensure(view.showG, 1, &img.srvG);
     ensure(view.showB, 2, &img.srvB);
     ensure(view.showA, 3, &img.srvA);
+
+    stbi_image_free(pixels);
 }
 
 // ==================== 图像加载 ====================
-bool LoadImageFromFile(const char* path, ImageData& outImg)
-{
-    outImg.Release();
-
-    int w, h, channels;
-    unsigned char* pixels = stbi_load(path, &w, &h, &channels, 4);
-    if (pixels == nullptr)
-        return false;
-
-    outImg.width = w;
-    outImg.height = h;
-    outImg.channels = channels;
-    outImg.pixels = pixels;
-
-    if (!CreateRGBATexture(outImg))
-    {
-        outImg.Release();
-        return false;
-    }
-    return true;
-}
-
 bool LoadImageFromFileW(const wchar_t* pathW, ImageData& outImg)
 {
-    HANDLE hFile = ::CreateFileW(pathW, GENERIC_READ, FILE_SHARE_READ,
-        nullptr, OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (hFile == INVALID_HANDLE_VALUE)
-        return false;
-
-    LARGE_INTEGER size = {};
-    if (!::GetFileSizeEx(hFile, &size) || size.QuadPart <= 0 ||
-        size.QuadPart > 512ll * 1024 * 1024)
-    {
-        ::CloseHandle(hFile);
-        return false;
-    }
-
-    std::vector<unsigned char> buffer((size_t)size.QuadPart);
-    DWORD bytesRead = 0;
-    BOOL ok = ::ReadFile(hFile, buffer.data(), (DWORD)buffer.size(), &bytesRead, nullptr);
-    ::CloseHandle(hFile);
-    if (!ok || bytesRead != (DWORD)buffer.size())
-        return false;
-
     outImg.Release();
 
-    int w, h, channels;
+    std::vector<unsigned char> buffer;
+    if (!ReadFileToBuffer(pathW, buffer)) return false;
+
+    int w = 0, h = 0, channels = 0;
     unsigned char* pixels = stbi_load_from_memory(
         buffer.data(), (int)buffer.size(), &w, &h, &channels, 4);
-    if (pixels == nullptr)
-        return false;
+    if (!pixels) return false;
 
     outImg.width = w;
     outImg.height = h;
     outImg.channels = channels;
-    outImg.pixels = pixels;
+    outImg.sourcePath = pathW;   // ← 记住路径，供通道分离懒加载
 
-    if (!CreateRGBATexture(outImg))
+    const bool ok = CreateRGBATexture(outImg, pixels);
+
+    // 立刻释放，不再常驻内存
+    stbi_image_free(pixels);
+
+    if (!ok)
     {
         outImg.Release();
         return false;
@@ -341,20 +360,21 @@ bool LoadImageFromFileW(const wchar_t* pathW, ImageData& outImg)
 }
 
 // ==================== 文件对话框 ====================
-bool OpenFileDialog(std::string& outPath)
+bool OpenFileDialogW(std::wstring& outPath)
 {
-    char filename[MAX_PATH] = {};
-    OPENFILENAMEA ofn = {};
+    wchar_t filename[MAX_PATH] = {};
+    OPENFILENAMEW ofn = {};
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = nullptr;
     ofn.lpstrFilter =
-        "Image Files\0*.png;*.jpg;*.jpeg;*.bmp;*.tga;*.gif;*.psd;*.hdr;*.pic;*.pnm\0"
-        "All Files\0*.*\0";
+        L"Image Files\0"
+        L"*.png;*.jpg;*.jpeg;*.bmp;*.tga;*.gif;*.psd;*.hdr;*.pic;*.pnm;*.webp\0"
+        L"All Files\0*.*\0";
     ofn.lpstrFile = filename;
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
 
-    if (GetOpenFileNameA(&ofn))
+    if (::GetOpenFileNameW(&ofn))
     {
         outPath = filename;
         return true;
@@ -363,17 +383,49 @@ bool OpenFileDialog(std::string& outPath)
 }
 
 // ==================== 打开文件（统一入口） ====================
-bool OpenImageFromPath(const std::string& path)
+static void OnImageLoaded()
 {
-    if (LoadImageFromFile(path.c_str(), g_image))
+    g_channelView.separateMode = false;
+    g_channelView.ResetView();
+    g_image.ReleaseChannelSRVs();
+    g_statusMessage.clear();
+
+    // 按新图尺寸收缩通道缓冲
+    if (g_channelScratch.capacity() >
+        (size_t)g_image.width * g_image.height * 4 * 8)
     {
-        g_channelView.separateMode = false;
-        g_channelView.ResetView();
-        g_image.ReleaseChannelSRVs();
-        g_statusMessage.clear();
+        std::vector<unsigned char>().swap(g_channelScratch);
+    }
+}
+
+// 把宽字符路径转 UTF-8，用于拼错误消息
+static std::string WideToUtf8(const wchar_t* w)
+{
+    if (!w) return {};
+
+    int need = ::WideCharToMultiByte(
+        CP_UTF8, 0, w, -1, nullptr, 0, nullptr, nullptr);
+    if (need <= 0) return {};
+
+    std::string out(need, '\0');
+    ::WideCharToMultiByte(
+        CP_UTF8, 0, w, -1,
+        &out[0], 
+        need, nullptr, nullptr);
+    out.resize(need - 1); 
+    return out;
+}
+
+
+
+bool OpenImageFromPath(const std::wstring& path)
+{
+    if (LoadImageFromFileW(path.c_str(), g_image))
+    {
+        OnImageLoaded();
         return true;
     }
-    g_statusMessage = "无法加载文件: " + path;
+    g_statusMessage = u8"无法加载文件: " + WideToUtf8(path.c_str());
     return false;
 }
 
@@ -419,8 +471,8 @@ void DrawToolbar(ChannelView& view, ImageData& img, float toolbarHeight)
     {
         if (ImGui::Button(u8"打开图片", ImVec2(90.0f, 0.0f)))
         {
-            std::string path;
-            if (OpenFileDialog(path))
+            std::wstring path;
+            if (OpenFileDialogW(path))
                 OpenImageFromPath(path);
         }
 
@@ -448,7 +500,7 @@ void DrawToolbar(ChannelView& view, ImageData& img, float toolbarHeight)
         ImGui::SameLine(0, 16.0f);
         ImGui::Checkbox(u8"通道分离模式", &view.separateMode);
 
-        if (img.pixels)
+        if (&view.separateMode)
         {
             char buf[128];
             sprintf_s(buf, u8"%d x %d   通道: %d", img.width, img.height, img.channels);
@@ -848,8 +900,23 @@ static void RenderFrame()
 }
 
 // ==================== 主函数 ====================
-int main(int, char**)
+int wmain(int argc, wchar_t** argv)
 {
+    // 调试命令行窗口
+#ifdef _DEBUG
+    if (::AllocConsole())
+    {
+        FILE* f;
+        freopen_s(&f, "CONOUT$", "w", stdout);
+        freopen_s(&f, "CONOUT$", "w", stderr);
+    }
+#endif
+
+    // 解析命令行参数
+    std::wstring initialPath;
+    if (argc >= 2 && argv[1] != nullptr && argv[1][0] != L'\0')
+        initialPath = argv[1];
+
     ImGui_ImplWin32_EnableDpiAwareness();
 
     WNDCLASSEXW wc = {
@@ -881,12 +948,22 @@ int main(int, char**)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     // 载入系统默认字体
     io.Fonts->AddFontFromFileTTF("c:/Windows/Fonts/msyh.ttc", 16.0f, NULL, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+    if (io.Fonts == nullptr) {
+        io.Fonts->AddFontDefault();
+        g_statusMessage = "Error: Unable to find the Chinese font";
+    }
     io.IniFilename = nullptr;
 
     ImGui::StyleColorsDark();
 
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+
+    // 如果从命令行传入的图片，在这里加载
+    if (!initialPath.empty())
+    {
+        OpenImageFromPath(initialPath);
+    }
 
     RenderFrame();
     RenderFrame();
