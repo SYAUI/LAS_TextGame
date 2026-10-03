@@ -8,4 +8,8 @@ Text Game Engine project
 
 FFmpeg
 
+[bc7enc_rdo](https://github.com/richgel999/bc7enc_rdo)
+
+[stb](https://github.com/nothings/stb)
+
 python 3.12.10

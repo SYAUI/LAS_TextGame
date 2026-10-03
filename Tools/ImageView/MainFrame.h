@@ -2,6 +2,7 @@
 #include "framework.h"
 #include "resource.h"
 #include "ImageView.h"
+#include "TexExporter.h"
 
 class CMainFrame : public CFrameWindowImpl<CMainFrame>,
     public CUpdateUI<CMainFrame>,
@@ -18,6 +19,7 @@ public:
     BEGIN_MSG_MAP(CMainFrame)
         MESSAGE_HANDLER(WM_CREATE, OnCreate)
         MESSAGE_HANDLER(WM_DESTROY, OnDestroy)
+        COMMAND_ID_HANDLER(ID_FILE_EXPORT_TEX, OnFileExportTex)
         COMMAND_ID_HANDLER(ID_FILE_OPEN, OnFileOpen)
         COMMAND_ID_HANDLER(ID_FILE_EXIT, OnFileExit)
         COMMAND_ID_HANDLER(ID_VIEW_FIT, OnViewFit)
@@ -32,6 +34,7 @@ public:
     END_MSG_MAP()
 
     BEGIN_UPDATE_UI_MAP(CMainFrame)
+        UPDATE_ELEMENT(ID_FILE_EXPORT_TEX, UPDUI_MENUPOPUP)
         UPDATE_ELEMENT(ID_VIEW_FIT, UPDUI_MENUPOPUP)
         UPDATE_ELEMENT(ID_VIEW_PIXEL_PERFECT, UPDUI_MENUPOPUP)
         UPDATE_ELEMENT(ID_VIEW_SEPARATE, UPDUI_MENUPOPUP)
@@ -45,6 +48,7 @@ public:
     BOOL OnIdle()
     {
         UIUpdateStatusBar();
+        UIEnable(ID_FILE_EXPORT_TEX, m_view.m_imgWidth > 0);
         return FALSE;
     }
 
@@ -109,7 +113,7 @@ public:
     {
         // 1. 定义文件类型过滤器
         COMDLG_FILTERSPEC filterSpec[] = {
-            { L"图片文件", L"*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp" },
+            { L"图片文件", L"*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.tex" },
             { L"所有文件", L"*.*" }
         };
 
@@ -154,6 +158,23 @@ public:
     LRESULT OnFileExit(WORD, WORD, HWND, BOOL&)
     {
         PostMessage(WM_CLOSE);
+        return 0;
+    }
+
+    LRESULT OnFileExportTex(WORD, WORD, HWND, BOOL&)
+    {
+        if (m_view.m_imgWidth <= 0 || m_view.m_rgbaCache.empty()) {
+            ::MessageBoxW(m_hWnd, L"请先加载一张图片。",
+                L"导出为 .tex", MB_ICONINFORMATION | MB_OK);
+            return 0;
+        }
+        tex_export::PromptAndExport(
+            m_hWnd,
+            m_view.m_rgbaCache,
+            m_view.m_imgWidth,
+            m_view.m_imgHeight,
+            m_curPath,
+            m_view.m_pixelPerfect);
         return 0;
     }
 

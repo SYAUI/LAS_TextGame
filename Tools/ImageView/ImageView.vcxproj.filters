@@ -13,11 +13,14 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\core">
+      <UniqueIdentifier>{b50614bd-2395-49cb-b663-60a314932be3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Lib">
+      <UniqueIdentifier>{defa567c-19fb-46d0-a0c9-71e90a107c93}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Libraries\stb\stb_image.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -30,10 +33,22 @@
     <ClInclude Include="MainFrame.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ImgFormatLoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\Img_format.hpp">
+      <Filter>头文件\core</Filter>
+    </ClInclude>
+    <ClInclude Include="TexExporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main_wtl.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Libraries\bc7enc\rgbcx.cpp">
+      <Filter>头文件\Lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -19,13 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Libraries\stb\stb_image.h" />
+    <ClInclude Include="..\..\core\Img_format.hpp" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ImgFormatLoader.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ImageView.h" />
+    <ClInclude Include="TexExporter.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Libraries\bc7enc\rgbcx.cpp" />
     <ClCompile Include="main_wtl.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -138,7 +141,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\bc7enc;$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,7 +159,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\bc7enc;$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

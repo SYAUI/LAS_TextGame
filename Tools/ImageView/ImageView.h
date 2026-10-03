@@ -1,9 +1,14 @@
 #pragma once
 #include "framework.h"
 #include "resource.h"
+#include "ImgFormatLoader.h"
 #include <vector>
 #include <functional>
 #include <cmath>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 
 class CImageView : public CWindowImpl<CImageView>
 {
@@ -23,9 +28,8 @@ public:
     CComPtr<ID2D1Bitmap> m_pChanBitmap[4];
     bool m_chanCreated[4] = { false, false, false, false };
 
-    // 缓存解码后的 RGBA 像素（用于通道分离时复用，避免二次解码）
+    // 缓存解码后的 BGRA 像素（与 D2D 原生顺序一致，避免通道交换）
     std::vector<unsigned char> m_rgbaCache;
-    int m_cacheW = 0, m_cacheH = 0;
 
     // 视图
     double m_zoom = 1.0;
@@ -77,7 +81,7 @@ public:
         if (!m_pD2DFactory) return;
         RECT rc; GetClientRect(&rc);
         D2D1_SIZE_U size = D2D1::SizeU(
-            max(1, rc.right - rc.left),
+            (((1) > (rc.right - rc.left)) ? (1) : (rc.right - rc.left)),
             max(1, rc.bottom - rc.top));
 
         m_pRenderTarget.Release();
@@ -92,6 +96,37 @@ public:
     {
         if (!m_pRenderTarget) return E_FAIL;
 
+        // 分支：引擎专有格式图片tex
+        if (img::IsTexFile(filePath))
+        {
+            img::TexImage tex;
+            if (!img::LoadTexFile(filePath, tex)) return E_FAIL;
+
+            if (m_rgbaCache.capacity() > tex.pixels.size() * 4)
+                std::vector<unsigned char>().swap(m_rgbaCache);
+            m_rgbaCache = std::move(tex.pixels);
+
+            m_pBitmap.Release();
+            HRESULT hr = CreateD2DBitmapFromBGRA(
+                m_pRenderTarget, m_rgbaCache.data(),
+                tex.width, tex.height, &m_pBitmap);
+            if (FAILED(hr)) return hr;
+
+            m_imgWidth = tex.width;
+            m_imgHeight = tex.height;
+
+            ReleaseChannelBitmaps();
+            m_fitToWindow = true;
+            m_pan = { 0.0f, 0.0f };
+            m_separateMode = false;
+
+            if (OnImageLoaded) OnImageLoaded();
+            Invalidate(FALSE);
+            return S_OK;
+        }
+        // 分支结束
+
+
         // 1. 读文件
         std::vector<unsigned char> buf;
         if (!ReadFileToBuffer(filePath, buf)) return E_FAIL;
@@ -104,20 +139,20 @@ public:
 
         // 3. 缓存 RGBA（用于后续通道分离，避免重复解码）
         const size_t newSize = (size_t)w * h * 4;
-        // 如果旧容量比新需求大4倍，先彻底释放
         if (m_rgbaCache.capacity() > newSize * 4)
-        {
             std::vector<unsigned char>().swap(m_rgbaCache);
+        m_rgbaCache.resize(newSize);
+        for (size_t i = 0; i < (size_t)w * h; ++i) {
+            m_rgbaCache[i * 4 + 0] = pixels[i * 4 + 2];   // B ← R
+            m_rgbaCache[i * 4 + 1] = pixels[i * 4 + 1];   // G
+            m_rgbaCache[i * 4 + 2] = pixels[i * 4 + 0];   // R ← B
+            m_rgbaCache[i * 4 + 3] = pixels[i * 4 + 3];   // A
         }
-
-        m_rgbaCache.assign(pixels, pixels + (size_t)w * h * 4);
-        m_cacheW = w;
-        m_cacheH = h;
         stbi_image_free(pixels);
 
         // 4. 创建 D2D 主位图
         m_pBitmap.Release();
-        HRESULT hr = CreateD2DBitmapFromRGBA(
+        HRESULT hr = CreateD2DBitmapFromBGRA(
             m_pRenderTarget, m_rgbaCache.data(), w, h, &m_pBitmap);
         if (FAILED(hr)) return hr;
 
@@ -137,35 +172,37 @@ public:
         return S_OK;
     }
 
-    // 从 RGBA 原始像素创建 D2D 位图
-    static HRESULT CreateD2DBitmapFromRGBA(
+    // 从 BGRA 原始像素创建 D2D 位图
+    static HRESULT CreateD2DBitmapFromBGRA(
         ID2D1RenderTarget* pRT,
-        const unsigned char* rgba, int w, int h,
+        const unsigned char* bgra, int w, int h,
         ID2D1Bitmap** out)
     {
-        if (!pRT || !rgba || w <= 0 || h <= 0 || !out) return E_INVALIDARG;
+        if (!pRT || !bgra || w <= 0 || h <= 0 || !out) return E_INVALIDARG;
 
         const UINT stride = (UINT)w * 4;
-        std::vector<BYTE> bgra((size_t)stride * h);
+        std::vector<BYTE> premul((size_t)stride * h);
 
         for (int y = 0; y < h; ++y)
         {
-            const unsigned char* src = rgba + (size_t)y * w * 4;
-            BYTE* dst = bgra.data() + (size_t)y * stride;
+            const unsigned char* src = bgra + (size_t)y * w * 4;
+            BYTE* dst = premul.data() + (size_t)y * stride;
 
             for (int x = 0; x < w; ++x, src += 4, dst += 4)
             {
-                const BYTE r = src[0];
+                const BYTE b = src[0];
                 const BYTE g = src[1];
-                const BYTE b = src[2];
+                const BYTE r = src[2];
                 const BYTE a = src[3];
 
-                // premultiply
-                if (a == 255) { dst[0] = b; dst[1] = g; dst[2] = r; dst[3] = 255; continue; }
-                dst[0] = (BYTE)((b * a + 127) / 255);  // B
-                dst[1] = (BYTE)((g * a + 127) / 255);  // G
-                dst[2] = (BYTE)((r * a + 127) / 255);  // R
-                dst[3] = a;                            // A
+                if (a == 255) {
+                    dst[0] = b; dst[1] = g; dst[2] = r; dst[3] = 255;
+                    continue;
+                }
+                dst[0] = (BYTE)((b * a + 127) / 255);
+                dst[1] = (BYTE)((g * a + 127) / 255);
+                dst[2] = (BYTE)((r * a + 127) / 255);
+                dst[3] = a;
             }
         }
 
@@ -175,20 +212,17 @@ public:
 
         return pRT->CreateBitmap(
             D2D1::SizeU((UINT32)w, (UINT32)h),
-            bgra.data(),
-            stride,
-            &props,
-            out);
+            premul.data(), stride, &props, out);
     }
-
+    
     // 生成通道位图
     HRESULT GenerateChannelBitmaps()
     {
-        if (m_rgbaCache.empty() || m_cacheW <= 0 || m_cacheH <= 0)
+        if (m_rgbaCache.empty() || m_imgWidth <= 0 || m_imgHeight <= 0)
             return E_FAIL;
         if (!m_pRenderTarget) return E_FAIL;
 
-        const int  w = m_cacheW, h = m_cacheH;
+        const int  w = m_imgWidth, h = m_imgHeight;
         const UINT dstStride = (UINT)w * 4;
 
         // 1. 需要生成通道
@@ -222,20 +256,19 @@ public:
 
         for (size_t i = 0; i < pixelCount; ++i, src += 4)
         {
-            
-            if (needGen[0]) {
+            if (needGen[0]) {  // R
                 BYTE* d = dstPtr[0] + i * 4;
-                BYTE v = src[0]; d[0] = d[1] = d[2] = v; d[3] = 255;
+                BYTE v = src[2]; d[0] = d[1] = d[2] = v; d[3] = 255;
             }
-            if (needGen[1]) {
+            if (needGen[1]) {  // G
                 BYTE* d = dstPtr[1] + i * 4;
                 BYTE v = src[1]; d[0] = d[1] = d[2] = v; d[3] = 255;
             }
-            if (needGen[2]) {
+            if (needGen[2]) {  // B
                 BYTE* d = dstPtr[2] + i * 4;
-                BYTE v = src[2]; d[0] = d[1] = d[2] = v; d[3] = 255;
+                BYTE v = src[0]; d[0] = d[1] = d[2] = v; d[3] = 255;
             }
-            if (needGen[3]) {
+            if (needGen[3]) {  // A
                 BYTE* d = dstPtr[3] + i * 4;
                 BYTE v = src[3]; d[0] = d[1] = d[2] = v; d[3] = 255;
             }

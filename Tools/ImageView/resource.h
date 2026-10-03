@@ -6,6 +6,7 @@
 #define IDR_MAINFRAME                   128
 #define IDC_STATUSBAR                   1000
 #define IDC_STATUSBAR_INFO              1001
+#define ID_FILE_EXPORT_TEX				32770
 #define ID_FILE_OPEN                    32771
 #define ID_FILE_EXIT                    32772
 #define ID_VIEW_FIT                     32773

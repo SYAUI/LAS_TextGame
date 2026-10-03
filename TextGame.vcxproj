@@ -167,6 +167,7 @@
     <None Include="core\py\WRAPPER.py" />
     <None Include="Levels\map_main.tgl" />
     <None Include="Levels\test.tgl" />
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -90,7 +90,7 @@
       <Filter>ImGui</Filter>
     </ClInclude>
     <ClInclude Include="core\Img_format.hpp">
-      <Filter>头文件</Filter>
+      <Filter>源文件\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -104,6 +104,9 @@
       <Filter>源文件\Core\py</Filter>
     </None>
     <None Include="Levels\test.tgl">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="README.md">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
