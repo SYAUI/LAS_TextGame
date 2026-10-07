@@ -18,30 +18,11 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\core\Img_format.hpp" />
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="ImgFormatLoader.h" />
-    <ClInclude Include="MainFrame.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="ImageView.h" />
-    <ClInclude Include="TexExporter.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\Libraries\bc7enc\rgbcx.cpp" />
-    <ClCompile Include="main_wtl.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="app.ico" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{0a0a361a-2c36-4bda-b8b9-6c57eef5b7dc}</ProjectGuid>
-    <RootNamespace>ImageView</RootNamespace>
+    <ProjectGuid>{e88c2a48-a06b-4612-89ae-560fd3de64d4}</ProjectGuid>
+    <RootNamespace>VideoView</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -90,22 +71,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\ImageView</IntDir>
-    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <IncludePath>$(SolutionDir)Libraries\ffmpeg\include;$(SolutionDir)Libraries\imgui;$(SolutionDir)Libraries\imgui\backends;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\VideoView\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\ImageView</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Label="Vcpkg">
-    <VcpkgEnabled>true</VcpkgEnabled>
-    <VcpkgEnableManifest>false</VcpkgEnableManifest>
-    <VcpkgManifestInstall>
-    </VcpkgManifestInstall>
-    <VcpkgAutoLink>
-    </VcpkgAutoLink>
-  </PropertyGroup>
-  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <VcpkgInstalledDir>$(VcpkgRoot)\installed\</VcpkgInstalledDir>
+    <ReferencePath>$(ReferencePath)</ReferencePath>
+    <IncludePath>$(SolutionDir)Libraries\ffmpeg\include;$(SolutionDir)Libraries\imgui;$(SolutionDir)Libraries\imgui\backends;$(IncludePath)</IncludePath>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\tools\VideoView\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -141,14 +114,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\bc7enc;$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
+      <AdditionalLibraryDirectories>$(SolutionDir)Libraries\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>avformat.lib;avcodec.lib;avutil.lib;swresample.lib;swscale.lib;xaudio2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -159,18 +130,38 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Libraries\bc7enc;$(SolutionDir)Libraries\stb;$(SolutionDir)Libraries\WTL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Libraries\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>avformat.lib;avcodec.lib;avutil.lib;swresample.lib;swscale.lib;xaudio2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Libraries\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="..\..\Libraries\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\Libraries\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\Libraries\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\Libraries\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\Libraries\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\Libraries\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="AudioRenderer.cpp" />
+    <ClCompile Include="Decoder.cpp" />
+    <ClCompile Include="Gui.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Libraries\imgui\imconfig.h" />
+    <ClInclude Include="..\..\Libraries\imgui\imgui.h" />
+    <ClInclude Include="..\..\Libraries\imgui\imgui_internal.h" />
+    <ClInclude Include="AudioRenderer.h" />
+    <ClInclude Include="Decoder.h" />
+    <ClInclude Include="Gui.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>
