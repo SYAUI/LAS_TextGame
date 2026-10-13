@@ -25,6 +25,9 @@
     <Filter Include="源文件\Core\py">
       <UniqueIdentifier>{fa36ca7c-8f24-4f6c-b056-6daed57b2c3b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Core">
+      <UniqueIdentifier>{3fc20655-906c-4c08-9ca2-b2412f6fe1bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -91,6 +94,15 @@
     </ClInclude>
     <ClInclude Include="core\Img_format.hpp">
       <Filter>源文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\TLSFAllocator.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\PythonRuntime.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="core\SpinLock.h">
+      <Filter>头文件\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

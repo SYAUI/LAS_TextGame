@@ -4,7 +4,7 @@
 #include <vector>
 #include <fstream>
 
-#include "TextCore.h"
+#include "PythonRuntime.h"
 
 // Python 包装函数
 
@@ -101,23 +101,15 @@ bool ExecuteScript(const std::string& filepath, const std::string& scriptContent
             std::istreambuf_iterator<char>());
         file.close();
 
-
-        // 使用 PyConfig 初始化
-        PyConfig config;
-        PyConfig_InitPythonConfig(&config);
-        // 设置 home 路径
-        std::wstring home = L"Libraries/python/";
-        PyConfig_SetString(&config, &config.home, home.c_str());
-
-        PyStatus status = Py_InitializeFromConfig(&config);
-        PyConfig_Clear(&config);
-        if (PyStatus_Exception(status)) {
+        TextGameCore* core = new TextGameCore();
+        if (!InitializePythonRuntime(core, 64)) {  // 64 MB 沙盒
             std::cerr << "Python 初始化失败！" << std::endl;
             return false;
         }
 
         // 注册 core 模块
         init_core_module();
+
         // 执行转换脚本（定义 transform_script）
         if (PyRun_SimpleString(content.c_str()) != 0) {
             std::cerr << "加载转换脚本失败！" << std::endl;

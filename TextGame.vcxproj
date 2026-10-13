@@ -151,8 +151,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="core\PythonRuntime.h" />
+    <ClInclude Include="core\SpinLock.h" />
     <ClInclude Include="core\TextCore.h" />
     <ClInclude Include="core\Img_format.hpp" />
+    <ClInclude Include="core\TLSFAllocator.h" />
     <ClInclude Include="ImGuiEngine.h" />
     <ClInclude Include="Libraries\imgui\imconfig.h" />
     <ClInclude Include="Libraries\imgui\imgui.h" />

@@ -125,7 +125,7 @@ int RunImGuiWindow()
 
         // 2. 渲染一帧
         RenderFrame(); 
-
+        
         // 3. 如果没有消息，则等待下一个消息
         ::WaitMessage();
 

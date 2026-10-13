@@ -5,11 +5,8 @@ Text Game Engine project
 
 ## Libraries
 [imgui](https://github.com/ocornut/imgui)
-
 FFmpeg
-
 [bc7enc_rdo](https://github.com/richgel999/bc7enc_rdo)
-
 [stb](https://github.com/nothings/stb)
-
+[ufbx](https://github.com/ufbx/ufbx)
 python 3.12.10

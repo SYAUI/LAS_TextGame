@@ -36,10 +36,6 @@ namespace gmd {
         return ~crc;
     }
 
-    inline uint64_t AlignUp(uint64_t v, uint64_t a) {
-        return (v + a - 1) & ~(a - 1);
-    }
-
     template <typename T>
     inline void PushPod(std::vector<uint8_t>& v, const T& x) {
         static_assert(std::is_trivially_copyable<T>::value, "POD required");

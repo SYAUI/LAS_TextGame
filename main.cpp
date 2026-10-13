@@ -3,10 +3,10 @@
 
 int main()
 {
-    //TextGameCore TGC(1024);
-    //RunImGuiWindow();
-    //TGC.VMemoryDump();
+    
     RunScriptFile("Levels\\test.tgl");
+
+    RunImGuiWindow();
 
     return 0;
 }

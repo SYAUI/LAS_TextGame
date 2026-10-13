@@ -48,3 +48,6 @@
 
 # Ignore configuration file
 imgui.ini
+
+# Ignore Python temp
+__pycache__

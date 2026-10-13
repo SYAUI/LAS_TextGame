@@ -5,17 +5,17 @@
 
 
 
-TextGameCore::TextGameCore(int data_size)
+TextGameCore::TextGameCore()
 {
-    IE_malloc_init(data_size);
-
 }
 
 TextGameCore::~TextGameCore()
 {
-    delete[]data;
-
-
+    if (data) 
+    { 
+        delete[] data; 
+        data = nullptr;
+    }
 }
 
 //内存转储
@@ -30,19 +30,6 @@ void TextGameCore::VMemoryDump() const
     return;
 }
 
-
-int TextGameCore::InitGame(int data_size)
-{
-    //避免存在未释放内容
-    if (!data)
-        delete []data;
-    //虚拟数据段空间开辟
-    data = new char[data_size + 1];
-
-
-
-	return 0;
-}
 
 int TextGameCore::LoadGameLevel(std::string path = "map_main.tgl")
 {
