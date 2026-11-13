@@ -1,0 +1,143 @@
+# ---- 角色 ----
+narrator = Character("", color="#888888")
+npc = Character("NPC",
+                color="#FF6B9D",
+                sprite="assets/sprites/test.png",
+                avatar="assets/avatars/test.png",
+                side="right")
+player = Character("Player",  color="#4A90E2")
+
+# ---- 全局状态 ----
+player_name = "测试玩家"
+has_key     = True
+level       = 12
+gold        = 100
+
+
+# ------------------------------------------------------------
+# start
+# ------------------------------------------------------------
+@label
+def start():
+    narrator("夜深了，你独自站在古老的宅邸前。")
+    npc("欢迎，{player_name}。")
+
+    choice = menu("要做什么？", [
+        "进入宅邸",
+        ("用钥匙开门", has_key),
+        ("挑战守卫", level >= 10),
+        "转身离开",
+    ])
+
+    if choice == 0:
+        jump("enter_manor")
+    elif choice == 1:
+        jump("use_key")
+    elif choice == 2:
+        jump("fight_guard")
+    elif choice == 3:
+        jump("leave")
+    else:
+        narrator("（没有做出选择，游戏结束。）")
+        stop()
+
+
+# ------------------------------------------------------------
+# enter_manor：展示 call / return
+# ------------------------------------------------------------
+@label
+def enter_manor():
+    narrator("你推开了沉重的大门……")
+    call("encounter")            # 结束后回到下一行
+    narrator("你继续深入宅邸。")
+    jump("treasure_room")
+
+
+# ------------------------------------------------------------
+# use_key：jump 到 enter_manor
+# ------------------------------------------------------------
+@label
+def use_key():
+    narrator("你掏出了那把神秘的钥匙。")
+    npc("这把钥匙真的能打开吗？")
+    jump("enter_manor")
+
+
+# ------------------------------------------------------------
+# fight_guard：jump 到 enter_manor
+# ------------------------------------------------------------
+@label
+def fight_guard():
+    npc("吃我一剑！")
+    narrator("经过一番苦战，你击败了守卫。")
+    level = level + 1
+    narrator("等级提升至 {level}。")
+    jump("enter_manor")
+
+
+# ------------------------------------------------------------
+# leave：stop 退出
+# ------------------------------------------------------------
+@label
+def leave():
+    narrator("你转身离去，消失在夜色中。")
+    npc("也许下次吧。")
+    stop()
+
+
+# ------------------------------------------------------------
+# encounter：被 call 进入，正常 return
+# ------------------------------------------------------------
+@label
+def encounter():
+    narrator("有什么东西在暗处。")
+    player("小心！")
+    return
+
+
+# ------------------------------------------------------------
+# treasure_room：testprint 块语法 + 菜单二次分支
+# ------------------------------------------------------------
+@label
+def treasure_room():
+    textprint {
+        你走进一间布满灰尘的房间。
+        中央放着一个古老的箱子。
+        角落里似乎还有些别的东西。
+    }
+
+    choice = menu("要怎么做？", [
+        "打开箱子",
+        ("带走角落的东西（需要金币 > 50）", gold > 50),
+        "离开房间",
+    ])
+
+    if choice == 0:
+        jump("open_chest")
+    elif choice == 1:
+        jump("take_corner")
+    else:
+        jump("end_game")
+
+
+@label
+def open_chest():
+    narrator("你打开了箱子……")
+    npc("里面有一枚发光的护符。")
+    narrator("你获得了【神秘护符】。")
+    jump("end_game")
+
+
+@label
+def take_corner():
+    narrator("你走向角落，捡起了一个破旧的卷轴。")
+    global gold
+    gold = gold - 30
+    narrator("剩余金币：{gold}。")
+    jump("end_game")
+
+
+@label
+def end_game():
+    narrator("（测试流程结束。）")
+    stop()

@@ -1,7 +1,0 @@
-x = 10
-
-textprint {
-    one 第一行 {x}
-    two 第二行 {x}
-}
-textprint("第三行", "第四行")

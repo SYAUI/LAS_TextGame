@@ -1,13 +1,12 @@
-#include "core/TextCore.h"
+#include "core/TextGameAPI.h"
 #include "ImGuiEngine.h"
+#include <iostream>
+
+using namespace textgame;
 
 int main()
 {
-    
-    RunScriptFile("Levels\\test.tgl");
-
     RunImGuiWindow();
-
     return 0;
 }
 

@@ -2,55 +2,37 @@
 #include <string>
 #include <vector>
 #include "TLSFAllocator.h"
+#include "TextGameAPI.h"
 
-class TextGameCore
-{
-public:
-	//构造函数
-	TextGameCore();
-	//解析函数
-	~TextGameCore();
+namespace textgame {
 
-	static struct mem_block
-	{
-		bool is_free;
-		bool last_is_free;
-		uintptr_t blocksize;//块大小
-		uintptr_t next_block;
+	class TextGameCoreImpl {
+	public:
+		GameConfig cfg;
+		bool       pyInitialized = false;
+		bool       initialized = false;
+
+		// 主线程的 PyThreadState*，由 PythonRuntime 管理，Init 后保存，Shutdown 前恢复
+		void* mainThreadState = nullptr;
+
+		// 沙盒内存
+		TLSFAllocator tlsf;
+		char* data = nullptr;   // 底层大块内存
+		int   dataSize = 0;         // 字节
+
+		// 关卡
+		std::vector<std::string> levelSrc;
+
+		// 内存接口
+		void  MemInit(int bytes);
+		void  MemClose();
+
+		void* Malloc(size_t n) { return tlsf.valid() ? tlsf.alloc(n) : nullptr; }
+		void* Calloc(size_t n, size_t sz);
+		void* Realloc(void* p, size_t sz) { return tlsf.valid() ? tlsf.realloc(p, sz) : nullptr; }
+		void  Free(void* p) { if (p && tlsf.valid()) tlsf.dealloc(p); }
+
+		bool  MemReady() const { return data != nullptr && tlsf.valid(); }
 	};
-	int block_size;
 
-	/* 脚本函数 */
-	void LaunchGame();//启动游戏
-	int LoadGameLevel(std::string path);//载入关卡数据
-
-	/* 游戏逻辑 */
-
-
-	/* 公开内存操作 */
-	void VMemoryDump() const;
-	void IE_malloc_init(int data_size);
-	void* IE_malloc(size_t size);
-	void* IE_calloc(size_t nmemb, size_t size);
-	void* IE_realloc(void* p, size_t new_size);
-	void IE_free(void* p);
-
-private:
-
-	TLSFAllocator tlsf;
-	char* data = nullptr; // 底层大块内存
-
-	std::vector<std::string> level_src;
-
-};
-
-
-// Cpp原型操作
-
-bool _speak(std::string text);
-bool _textprint(std::string text[], int size);
-bool _load(std::string path);
-
-
-// Python 脚本相关
-bool RunScriptFile(const std::string& filepath);
+} // namespace textgame

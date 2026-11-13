@@ -1,200 +1,166 @@
+Ôªø#include "PythonRuntime.h"
+#include "TextGameAPI.h"
+
 #include <Python.h>
-#include <iostream>
 #include <string>
 #include <vector>
-#include <fstream>
+#include <iostream>
 
-#include "PythonRuntime.h"
+namespace textgame {
+    namespace {
 
-// Python ∞¸◊∞∫Ø ˝
+        // ---------------- ÂåÖË£ÖÔºö‰ªé PyObject ‚Üí TextGameCore ÊàêÂëò ----------------
 
-// ∞¸◊∞ _speak
-static PyObject* py_speak(PyObject* self, PyObject* args) {
-    const char* text;
-    if (!PyArg_ParseTuple(args, "s", &text))
-        return nullptr;
-    bool result = _speak(std::string(text));
-    return PyBool_FromLong(result ? 1 : 0);
-}
+        PyObject* Py_Speak(PyObject*, PyObject* args) {
+            const char* text = nullptr;
+            if (!PyArg_ParseTuple(args, "s", &text)) return nullptr;
 
-// ∞¸◊∞ _textprint
-static PyObject* py_textprint(PyObject* self, PyObject* args) {
-    PyObject* listObj;
-    if (!PyArg_ParseTuple(args, "O", &listObj))
-        return nullptr;
-    if (!PyList_Check(listObj)) {
-        PyErr_SetString(PyExc_TypeError, "Expected a list of strings");
-        return nullptr;
-    }
-    Py_ssize_t size = PyList_Size(listObj);
-    std::vector<std::string> lines;
-    lines.reserve(size);
-    for (Py_ssize_t i = 0; i < size; ++i) {
-        PyObject* item = PyList_GetItem(listObj, i);
-        if (!PyUnicode_Check(item)) {
-            PyErr_SetString(PyExc_TypeError, "List items must be strings");
-            return nullptr;
-        }
-        const char* s = PyUnicode_AsUTF8(item);
-        lines.emplace_back(s);
-    }
+            auto* core = GetActiveCore();
+            if (!core) { PyErr_SetString(PyExc_RuntimeError, "no active core"); return nullptr; }
 
-    // ¥´µ› std::string  ˝◊È£®÷∏œÚ vector ƒ⁄≤ø ˝æ›£©
-    bool result = _textprint(lines.data(), static_cast<int>(lines.size()));
-    return PyBool_FromLong(result ? 1 : 0);
-}
-
-// ∞¸◊∞ _load
-static PyObject* py_load(PyObject* self, PyObject* args) {
-    const char* path;
-    if (!PyArg_ParseTuple(args, "s", &path))
-        return nullptr;
-    bool result = _load(std::string(path));
-    return PyBool_FromLong(result ? 1 : 0);
-}
-
-// ƒ£øÈ∂®“Â
-static PyMethodDef CoreMethods[] = {
-    {"_core_speak", py_speak, METH_VARARGS, "Core speak function."},
-    {"_core_textprint", py_textprint, METH_VARARGS, "Core textprint function."},
-    {"_core_load", py_load, METH_VARARGS, "Core load function."},
-    {nullptr, nullptr, 0, nullptr}
-};
-
-// ≥ı ºªØƒ£øÈ
-static void init_core_module() {
-    PyObject* mod = PyImport_AddModule("core");
-    if (!mod) return;
-    if (PyModule_AddFunctions(mod, CoreMethods) != 0) {
-        std::cerr << "core ƒ£øÈ≥ı ºªØ ß∞‹£°" << std::endl;
-        return;
-    }
-
-    // ◊¢»Î∫Ø ˝µΩ __main__£®¥” core ƒ£øÈ÷–Ã·»°£©
-    PyObject* main = PyImport_ImportModule("__main__");
-    if (!main) return;
-    PyObject* dict = PyModule_GetDict(main);
-    for (PyMethodDef* def = CoreMethods; def->ml_name != nullptr; ++def) {
-        PyObject* func = PyObject_GetAttrString(mod, def->ml_name);
-        if (func) {
-            PyDict_SetItemString(dict, def->ml_name, func);
-            Py_DECREF(func);
-        }
-    }
-    Py_DECREF(main);
-}
-
-
-// ÷˜¥¶¿Ì∫Ø ˝
-
-// ÷¥––Ω≈±æ£¨∑µªÿ «∑Ò≥…π¶
-bool ExecuteScript(const std::string& filepath, const std::string& scriptContent) {
-    // ≥ı ºªØ Python£®»Áπ˚Œ¥≥ı ºªØ£©
-    static bool python_initialized = false;
-    if (!python_initialized) {
-        std::ifstream file("core\\py\\LARK_TRANSFORM_SCRIPT.py");
-        if (!file.is_open()) {
-            std::cerr << "Œﬁ∑®¥Úø™◊™ªªΩ≈±æ" << std::endl;
-            return false;
-        }
-        std::string content((std::istreambuf_iterator<char>(file)),
-            std::istreambuf_iterator<char>());
-        file.close();
-
-        TextGameCore* core = new TextGameCore();
-        if (!InitializePythonRuntime(core, 64)) {  // 64 MB …≥∫–
-            std::cerr << "Python ≥ı ºªØ ß∞‹£°" << std::endl;
-            return false;
+            return PyBool_FromLong(core->Speak(text) ? 1 : 0);
         }
 
-        // ◊¢≤· core ƒ£øÈ
-        init_core_module();
+        PyObject* Py_TextPrint(PyObject*, PyObject* args) {
+            PyObject* list = nullptr;
+            if (!PyArg_ParseTuple(args, "O", &list)) return nullptr;
 
-        // ÷¥––◊™ªªΩ≈±æ£®∂®“Â transform_script£©
-        if (PyRun_SimpleString(content.c_str()) != 0) {
-            std::cerr << "º”‘ÿ◊™ªªΩ≈±æ ß∞‹£°" << std::endl;
-            return false;
+            if (!PyList_Check(list)) {
+                PyErr_SetString(PyExc_TypeError, "expected list[str]");
+                return nullptr;
+            }
+
+            Py_ssize_t n = PyList_Size(list);
+            std::vector<std::string> lines;
+            lines.reserve(static_cast<size_t>(n));
+            for (Py_ssize_t i = 0; i < n; ++i) {
+                PyObject* it = PyList_GetItem(list, i);   // borrowed
+                if (!PyUnicode_Check(it)) {
+                    PyErr_SetString(PyExc_TypeError, "list items must be str");
+                    return nullptr;
+                }
+                lines.emplace_back(PyUnicode_AsUTF8(it));
+            }
+
+            auto* core = GetActiveCore();
+            if (!core) { PyErr_SetString(PyExc_RuntimeError, "no active core"); return nullptr; }
+            return PyBool_FromLong(core->TextPrint(lines) ? 1 : 0);
         }
 
-        // ∂®“Â Python ∞¸◊∞∫Ø ˝÷ß≥÷ str.format
-        file.open("core\\py\\WRAPPER.py");
-        if (!file.is_open()) {
-            std::cerr << "Œﬁ∑®¥Úø™∞¸◊∞∫Ø ˝Œƒº˛" << std::endl;
-            return false;
-        }
-        std::string wrapperContent((std::istreambuf_iterator<char>(file)),
-            std::istreambuf_iterator<char>());
-        file.close();
-        if (PyRun_SimpleString(wrapperContent.c_str()) != 0) {
-            PyErr_Print();
-            std::cerr << "÷¥––∞¸◊∞∫Ø ˝Œƒº˛ ß∞‹£°" << std::endl;
-            return false;
+        PyObject* Py_Load(PyObject*, PyObject* args) {
+            const char* path = nullptr;
+            if (!PyArg_ParseTuple(args, "s", &path)) return nullptr;
+
+            auto* core = GetActiveCore();
+            if (!core) { PyErr_SetString(PyExc_RuntimeError, "no active core"); return nullptr; }
+            return PyBool_FromLong(core->Load(path) ? 1 : 0);
         }
 
-        python_initialized = true;
+        PyObject* Py_SpeakCharacter(PyObject*, PyObject* args) {
+            const char* name = nullptr;
+            const char* color = nullptr;
+            const char* text = nullptr;
+            const char* sprite = "";
+            const char* avatar = "";
+            const char* side = "";
+
+            if (!PyArg_ParseTuple(args, "sss|sss",
+                &name, &color, &text,
+                &sprite, &avatar, &side))
+                return nullptr;
+
+            auto* core = GetActiveCore();
+            if (!core) { PyErr_SetString(PyExc_RuntimeError, "no active core"); return nullptr; }
+            return PyBool_FromLong(core->SpeakCharacter(name, color, text, sprite, avatar, side) ? 1 : 0);
+        }
+
+        PyObject* Py_LoadScene(PyObject*, PyObject* args) {
+            const char* path = nullptr;
+            if (!PyArg_ParseTuple(args, "s", &path)) return nullptr;
+
+            auto* core = GetActiveCore();
+            if (!core) { PyErr_SetString(PyExc_RuntimeError, "no active core"); return nullptr; }
+            return PyBool_FromLong(core->LoadScene(path) ? 1 : 0);
+        }
+
+        PyObject* Py_ClearCharacters(PyObject*, PyObject*) {
+            auto* core = GetActiveCore();
+            if (!core) { PyErr_SetString(PyExc_RuntimeError, "no active core"); return nullptr; }
+            return PyBool_FromLong(core->ClearCharacters() ? 1 : 0);
+        }
+
+        PyObject* Py_Menu(PyObject*, PyObject* args) {
+            const char* title = nullptr;
+            PyObject* list = nullptr;
+            if (!PyArg_ParseTuple(args, "sO", &title, &list)) return nullptr;
+
+            if (!PyList_Check(list)) {
+                PyErr_SetString(PyExc_TypeError, "choices must be list[str]");
+                return nullptr;
+            }
+            Py_ssize_t n = PyList_Size(list);
+            std::vector<std::string> choices;
+            choices.reserve(static_cast<size_t>(n));
+            for (Py_ssize_t i = 0; i < n; ++i) {
+                PyObject* it = PyList_GetItem(list, i);
+                if (!PyUnicode_Check(it)) {
+                    PyErr_SetString(PyExc_TypeError, "choice items must be str");
+                    return nullptr;
+                }
+                choices.emplace_back(PyUnicode_AsUTF8(it));
+            }
+
+            auto* core = GetActiveCore();
+            if (!core) { PyErr_SetString(PyExc_RuntimeError, "no active core"); return nullptr; }
+            int result = core->Menu(title, choices);
+
+            // ÂõûË∞ÉÈáåÂèØËÉΩÈÄöËøá RaiseScriptTermination ÊåÇ‰∫ÜÂºÇÂ∏∏
+            if (PyErr_Occurred()) return nullptr;
+
+            return PyLong_FromLong(result);
+        }
+
+        // ---------------- ÊñπÊ≥ïË°® ----------------
+
+        PyMethodDef kCoreMethods[] = {
+            {"_core_speak",           Py_Speak,           METH_VARARGS, "Speak text"},
+            {"_core_textprint",       Py_TextPrint,       METH_VARARGS, "Print lines"},
+            {"_core_load",            Py_Load,            METH_VARARGS, "Load resource"},
+            {"_core_speak_character", Py_SpeakCharacter,  METH_VARARGS, "Character speak"},
+            {"_core_load_scene",      Py_LoadScene,       METH_VARARGS, "Load scene"},
+            {"_core_menu",            Py_Menu,            METH_VARARGS, "Show menu"},
+            {"_core_clear_characters",Py_ClearCharacters, METH_NOARGS,  "clear characters"},
+            {nullptr, nullptr, 0, nullptr}
+        };
+
+        // Êää core Ê®°Âùó + __main__ ÂêåÊó∂ÊåÇ‰∏ä
+        void InjectInto_Module_and_Main(const char* modName, PyMethodDef* methods) {
+            PyObject* mod = PyImport_AddModule(modName);
+            if (!mod) return;
+            if (PyModule_AddFunctions(mod, methods) != 0) {
+                PyErr_Print();
+                return;
+            }
+
+            PyObject* main = PyImport_ImportModule("__main__");
+            if (!main) return;
+            PyObject* dict = PyModule_GetDict(main);
+            for (PyMethodDef* def = methods; def->ml_name; ++def) {
+                PyObject* fn = PyObject_GetAttrString(mod, def->ml_name);
+                if (fn) {
+                    PyDict_SetItemString(dict, def->ml_name, fn);
+                    Py_DECREF(fn);
+                }
+            }
+            Py_DECREF(main);
+        }
+
+    } // namespace
+
+    // Áî± PythonRuntime.cpp Ë∞ÉÁî®
+    bool RegisterCoreModuleBindings() {
+        InjectInto_Module_and_Main("core", kCoreMethods);
+        return true;
     }
 
-
-    // run_script(source_path, source_code)
-    PyObject* main = PyImport_ImportModule("__main__");
-    PyObject* func = PyObject_GetAttrString(main, "run_script");
-    if (!func || !PyCallable_Check(func)) {
-        std::cerr << "’“≤ªµΩ run_script ∫Ø ˝£°" << std::endl;
-        Py_XDECREF(func);
-        Py_DECREF(main);
-        return false;
-    }
-
-    PyObject* args = PyTuple_New(2);
-    if (!args) {
-        PyErr_Print();
-        std::cerr << "Œﬁ∑®¥¥Ω®≤Œ ˝‘™◊È" << std::endl;
-        Py_DECREF(func);
-        Py_DECREF(main);
-        return false;
-    }
-    PyObject* py_path = PyUnicode_FromString(filepath.c_str());
-    PyObject* py_code = PyUnicode_FromString(scriptContent.c_str());
-    if (!py_path || !py_code) {
-        PyErr_Print();
-        std::cerr << "Œﬁ∑®Ω´≤Œ ˝◊™ªªŒ™ Unicode" << std::endl;
-        Py_XDECREF(py_path);
-        Py_XDECREF(py_code);
-        Py_DECREF(args);
-        Py_DECREF(func);
-        Py_DECREF(main);
-        return false;
-    }
-    PyTuple_SetItem(args, 0, py_path);
-    PyTuple_SetItem(args, 1, py_code);
-
-    PyObject* result = PyObject_CallObject(func, args);
-    Py_DECREF(args);
-    Py_DECREF(func);
-    Py_DECREF(main);
-
-    if (!result) {
-        PyErr_Print();
-        std::cerr << "÷¥–– run_script  ß∞‹£°" << std::endl;
-        return false;
-    }
-
-
-    Py_DECREF(result); 
-    return true;
-}
-
-bool RunScriptFile(const std::string& filepath) {
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
-        std::cerr << "Œﬁ∑®¥Úø™Ω≈±æŒƒº˛: " << filepath << std::endl;
-        return false;
-    }
-
-    std::istreambuf_iterator<char> beg(file), end;
-    std::string content(beg, end);
-    file.close();
-
-    // ¥´»ÎŒƒº˛¬∑æ∂∫Õƒ⁄»›
-    return ExecuteScript(filepath, content);
-}
+} // namespace textgame

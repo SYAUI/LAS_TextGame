@@ -109,12 +109,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>Libraries\imgui;Libraries\imgui\backends;Libraries\python\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Libraries\imgui;Libraries\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;python312_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)/Lib/x64;Libraries/python/libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
@@ -136,10 +136,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="core\CompilerCore.cpp" />
-    <ClCompile Include="core\MemCore.cpp" />
-    <ClCompile Include="core\ScriptParse.cpp" />
-    <ClCompile Include="core\TextCore.cpp" />
     <ClCompile Include="Form_main.cpp" />
     <ClCompile Include="Libraries\imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="Libraries\imgui\backends\imgui_impl_win32.cpp" />
@@ -152,25 +148,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\PythonRuntime.h" />
-    <ClInclude Include="core\SpinLock.h" />
-    <ClInclude Include="core\TextCore.h" />
-    <ClInclude Include="core\Img_format.hpp" />
-    <ClInclude Include="core\TLSFAllocator.h" />
     <ClInclude Include="ImGuiEngine.h" />
     <ClInclude Include="Libraries\imgui\imconfig.h" />
     <ClInclude Include="Libraries\imgui\imgui.h" />
     <ClInclude Include="Libraries\imgui\imgui_internal.h" />
-    <ClInclude Include="Packer.cpp" />
-    <ClInclude Include="Packer.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="core\py\LARK_TRANSFORM_SCRIPT.py">
-      <FileType>Text</FileType>
-    </None>
-    <None Include="core\py\WRAPPER.py" />
-    <None Include="Levels\map_main.tgl" />
-    <None Include="Levels\test.tgl" />
     <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="core\SODASYSTEM\SODASYSTEM.vcxproj">
+      <Project>{6e2d871e-b6a6-4abd-b04c-d5d14fb28467}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

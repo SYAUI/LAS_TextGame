@@ -21,6 +21,12 @@
     <ClInclude Include="Packer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\PythonRuntime.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\TextCore.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -29,5 +35,22 @@
     <ClCompile Include="Packer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\PythonRuntime.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TextCore.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ScriptParse.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\py\LARK_TRANSFORM_SCRIPT.py">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="..\py\WRAPPER.py">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
